@@ -50,6 +50,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../images-grid-comfy-plugin" />
       <excludeFolder url="file://$MODULE_DIR$/../models" />
       <excludeFolder url="file://$MODULE_DIR$/../rgthree-comfy" />
+      <excludeFolder url="file://$MODULE_DIR$/../../venv" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.12 virtualenv at C:\Users\milan\Desktop\AIAIA\ComfyUI\venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
