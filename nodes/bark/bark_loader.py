@@ -109,8 +109,6 @@ class BarkLoader(BaseNode):
 
         bar = comfy.utils.ProgressBar(len(load_models))
         for model in load_models:
-            if model.variant != "none":
-                print(f"(down)loading bark {model.name}")
             model.load()
             bar.update(1)
 

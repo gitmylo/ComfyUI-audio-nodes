@@ -1,8 +1,10 @@
 ﻿from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 import torch
 from encodec.model import EncodecModel
+from encodec.utils import convert_audio
 
 from comfy.model_base import BaseModel
 from comfy.model_patcher import ModelPatcher
@@ -39,7 +41,7 @@ class EncodecLoader(BaseNode):
 
     RETURN_NAMES = ("model",)
     RETURN_TYPES = ("EncodecModel",)
-    CATEGORY = category("general")
+    CATEGORY = category("general/encodec")
     FUNCTION = "load"
 
     @classmethod
@@ -56,5 +58,79 @@ class EncodecLoader(BaseNode):
 
         return (model,)
 
+class EncodecDecode(BaseNode):
+    name = "encodec_decode"
+    display_name = "Decode encodec codebooks"
 
-nodes = [EncodecLoader]
+    RETURN_NAMES = ("audio",)
+    RETURN_TYPES = ("AUDIO",)
+    CATEGORY = category("general/encodec")
+    FUNCTION = "decode"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "encodec_model": ("EncodecModel",),
+                "codebooks": ("EncodecCodeBooks",)
+            }
+        }
+
+    def decode(self, encodec_model: EncodecModelRules, codebooks: np.ndarray):
+        device = encodec_model.patcher.load_device
+        encodec_model.patcher.load(device)
+        model = encodec_model.model
+
+        arr = torch.from_numpy(codebooks)[None]
+        if len(arr.shape) == 2:
+            arr = arr[None] # Unsqueeze again
+        arr = arr.to(device)
+        arr = arr.transpose(0, 1)
+        emb = model.quantizer.decode(arr)
+        out = model.decoder(emb)
+        audio_arr = out.detach().squeeze()
+        del arr, emb, out
+
+        audio_arr = audio_arr[None]
+        if len(audio_arr.shape) == 2:
+            audio_arr = audio_arr[None]
+
+        return ({"waveform": audio_arr, "sample_rate": encodec_model.model.sample_rate},)
+
+class EncodecEncode(BaseNode):
+    name = "encodec_encode"
+    display_name = "Encode encodec codebooks"
+
+    RETURN_NAMES = ("codebooks",)
+    RETURN_TYPES = ("EncodecCodeBooks",)
+    CATEGORY = category("general/encodec")
+    FUNCTION = "encode"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "encodec_model": ("EncodecModel",),
+                "audio": ("AUDIO",)
+            }
+        }
+
+    def encode(self, encodec_model: EncodecModelRules, audio: dict):
+        device = encodec_model.patcher.load_device
+        encodec_model.patcher.load(device)
+        model = encodec_model.model
+
+        wav: torch.Tensor = audio["waveform"]
+        sr: int = audio["sample_rate"]
+        wav = convert_audio(wav, sr, model.sample_rate, model.channels)
+        wav = wav.to(device)
+
+        with torch.no_grad():
+            codebooks = model.encode(wav)
+        codebooks = torch.cat([encoded[0] for encoded in codebooks], dim=-1).squeeze()
+        codebooks = codebooks.cpu().numpy()
+
+        return (codebooks,)
+
+
+nodes = [EncodecLoader, EncodecDecode, EncodecEncode]
