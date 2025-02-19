@@ -12,9 +12,9 @@ from transformers import BertTokenizer
 import comfy.utils
 from comfy.model_base import BaseModel
 from comfy.model_patcher import ModelPatcher
-from lib.bark.model import GPTConfig, GPT
-from lib.bark.model_fine import FineGPTConfig, FineGPT
-from lib.general.model_downloader import download_model_file
+from ...lib.bark.model import GPTConfig, GPT
+from ...lib.bark.model_fine import FineGPTConfig, FineGPT
+from ...lib.general.model_downloader import download_model_file
 from ...nodes.basenode import BaseNode
 from ...util.categories import category
 

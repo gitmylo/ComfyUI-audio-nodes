@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from scipy.special import softmax
 
 from comfy.utils import ProgressBar
-from lib.bark.generation import autocast, InferenceContext
+from ...lib.bark.generation import autocast, InferenceContext
 from .bark_loader import BarkModelRules
 from ...util.categories import category
 from ...nodes.basenode import BaseNode
