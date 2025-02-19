@@ -66,7 +66,7 @@ class PromptEncode(BaseNode):
                 "prompt": ("STRING", {"multiline": True})
             },
             "optional": {
-                "semantic_history": ("BarkSemanticHistory",)
+                "semantic_history": ("BarkSemanticTokens",)
             }
         }
 
@@ -229,8 +229,8 @@ class GenerateCoarse(BaseNode):
                 "use_kv_caching": ("BOOLEAN",)
             },
             "optional": {
-                "semantic_history": ("BarkSemanticHistory",),
-                "coarse_history": ("BarkCoarseHistory",)
+                "semantic_history": ("BarkSemanticTokens",),
+                "coarse_history": ("EncodecCodeBooks",)
             }
         }
 
@@ -394,7 +394,7 @@ class GenerateFine(BaseNode):
                 "temperature": ("FLOAT", {"min": 0.01, "max": 2, "default": 0.5})
             },
             "optional": {
-                "fine_history": ("BarkFineHistory",)
+                "fine_history": ("EncodecCodeBooks",)
             }
         }
 

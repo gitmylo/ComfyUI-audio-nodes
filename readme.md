@@ -14,3 +14,13 @@ Current nodes:
   * Encode audio
   * Decode audio
 
+# TODO
+* Bark
+  * Load/save speaker npz
+    * Use model folder (`models/bark/speakers`) for loading/saving voices
+  * Hubert quantizer for creating npz from audio https://github.com/gitmylo/bark-voice-cloning-HuBERT-quantizer
+  * Coarse-ify codebooks for creating custom npz files
+  * Direct way to support
+* Other
+  * HuBert model loader
+  * Concat audio
