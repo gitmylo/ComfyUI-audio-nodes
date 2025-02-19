@@ -1,0 +1,15 @@
+[project]
+name = "audio-nodes"
+description = "Various nodes related to audio."
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["funcy", "encodec"]
+
+[project.urls]
+Repository = "https://github.com/gitmylo/ComfyUI-audio-nodes"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "mylo"
+DisplayName = "Audio nodes"
+Icon = ""

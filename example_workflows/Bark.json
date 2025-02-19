@@ -1,0 +1,463 @@
+{
+  "last_node_id": 39,
+  "last_link_id": 36,
+  "nodes": [
+    {
+      "id": 28,
+      "type": "bark_text_encode",
+      "pos": [
+        620,
+        10
+      ],
+      "size": [
+        390,
+        140
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text_model",
+          "type": "BarkTextModel",
+          "link": 16
+        },
+        {
+          "name": "semantic_history",
+          "type": "BarkSemanticHistory",
+          "shape": 7,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "encoded text",
+          "type": "BarkTextEncodings",
+          "links": [
+            19
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "bark_text_encode"
+      },
+      "widgets_values": [
+        "the quick brown fox jumps over the lazy dog"
+      ]
+    },
+    {
+      "id": 31,
+      "type": "bark_generate_semantic",
+      "pos": [
+        1040,
+        -70
+      ],
+      "size": [
+        380.4000244140625,
+        222
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text_model",
+          "type": "BarkTextModel",
+          "link": 18
+        },
+        {
+          "name": "encoded_prompt",
+          "type": "BarkTextEncodings",
+          "link": 19
+        }
+      ],
+      "outputs": [
+        {
+          "name": "semantic tokens",
+          "type": "BarkSemanticTokens",
+          "links": [
+            22
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "bark_generate_semantic"
+      },
+      "widgets_values": [
+        0.7,
+        0,
+        0,
+        0.2,
+        true,
+        0,
+        false
+      ]
+    },
+    {
+      "id": 19,
+      "type": "encodec_loader",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        320,
+        60
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "EncodecModel",
+          "links": [
+            25
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "encodec_loader"
+      },
+      "widgets_values": [
+        false
+      ]
+    },
+    {
+      "id": 32,
+      "type": "bark_generate_coarse",
+      "pos": [
+        1450,
+        -230
+      ],
+      "size": [
+        330,
+        238
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "coarse_model",
+          "type": "BarkCoarseModel",
+          "link": 21
+        },
+        {
+          "name": "semantic_tokens",
+          "type": "BarkSemanticTokens",
+          "link": 22
+        },
+        {
+          "name": "semantic_history",
+          "type": "BarkSemanticHistory",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "coarse_history",
+          "type": "BarkCoarseHistory",
+          "shape": 7,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "codebooks",
+          "type": "EncodecCodeBooks",
+          "links": [
+            33
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "bark_generate_coarse"
+      },
+      "widgets_values": [
+        0.7,
+        0,
+        0,
+        630,
+        60,
+        false
+      ]
+    },
+    {
+      "id": 38,
+      "type": "bark_generate_fine",
+      "pos": [
+        1830,
+        -380
+      ],
+      "size": [
+        330,
+        98
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "fine_model",
+          "type": "BarkFineModel",
+          "link": 35
+        },
+        {
+          "name": "coarse_codebooks",
+          "type": "EncodecCodeBooks",
+          "link": 33
+        },
+        {
+          "name": "fine_history",
+          "type": "BarkFineHistory",
+          "shape": 7,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "codebooks",
+          "type": "EncodecCodeBooks",
+          "links": [
+            34
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "bark_generate_fine"
+      },
+      "widgets_values": [
+        0.5
+      ]
+    },
+    {
+      "id": 33,
+      "type": "encodec_decode",
+      "pos": [
+        2210,
+        200
+      ],
+      "size": [
+        302.4000244140625,
+        46
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "encodec_model",
+          "type": "EncodecModel",
+          "link": 25
+        },
+        {
+          "name": "codebooks",
+          "type": "EncodecCodeBooks",
+          "link": 34
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            27
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "encodec_decode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 18,
+      "type": "bark_loader",
+      "pos": [
+        280,
+        -50
+      ],
+      "size": [
+        320,
+        200
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "BarkTextModel",
+          "links": [
+            16,
+            18
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "coarse",
+          "type": "BarkCoarseModel",
+          "links": [
+            21
+          ],
+          "slot_index": 1
+        },
+        {
+          "name": "fine",
+          "type": "BarkFineModel",
+          "links": [
+            35
+          ],
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "bark_loader"
+      },
+      "widgets_values": [
+        "large",
+        "large",
+        "large",
+        false,
+        false
+      ]
+    },
+    {
+      "id": 13,
+      "type": "PreviewAudio",
+      "pos": [
+        2540,
+        200
+      ],
+      "size": [
+        315,
+        76
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 27
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewAudio"
+      },
+      "widgets_values": [
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      16,
+      18,
+      0,
+      28,
+      0,
+      "BarkTextModel"
+    ],
+    [
+      18,
+      18,
+      0,
+      31,
+      0,
+      "BarkTextModel"
+    ],
+    [
+      19,
+      28,
+      0,
+      31,
+      1,
+      "BarkTextEncodings"
+    ],
+    [
+      21,
+      18,
+      1,
+      32,
+      0,
+      "BarkCoarseModel"
+    ],
+    [
+      22,
+      31,
+      0,
+      32,
+      1,
+      "BarkSemanticTokens"
+    ],
+    [
+      25,
+      19,
+      0,
+      33,
+      0,
+      "EncodecModel"
+    ],
+    [
+      27,
+      33,
+      0,
+      13,
+      0,
+      "AUDIO"
+    ],
+    [
+      33,
+      32,
+      0,
+      38,
+      1,
+      "EncodecCodeBooks"
+    ],
+    [
+      34,
+      38,
+      0,
+      33,
+      1,
+      "EncodecCodeBooks"
+    ],
+    [
+      35,
+      18,
+      2,
+      38,
+      0,
+      "BarkFineModel"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.9090909090909092,
+      "offset": [
+        -203.16004997377894,
+        698.8558211551739
+      ]
+    },
+    "node_versions": {
+      "ComfyUI-audio-nodes": "48c3d559e3cade95032593b384a8a2728b5b4cf7",
+      "comfy-core": "0.3.14"
+    },
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0
+  },
+  "version": 0.4
+}
