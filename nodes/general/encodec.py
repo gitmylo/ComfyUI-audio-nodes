@@ -1,22 +1,36 @@
 ﻿from dataclasses import dataclass
 from typing import Any
+
+import torch
 from encodec.model import EncodecModel
 
+from comfy.model_base import BaseModel
+from comfy.model_patcher import ModelPatcher
 from ...util.categories import category
 from ...nodes.basenode import BaseNode
+
+import comfy.model_management as mm
 
 @dataclass
 class EncodecModelRules:
     cpu: bool
-    offload: bool
 
     model: EncodecModel = None
+    patcher: ModelPatcher = None
 
     def load(self):
+        main_device = mm.get_torch_device() if not self.cpu else torch.device("cpu")
+        offload_device = mm.unet_offload_device()
+
         model = EncodecModel.encodec_model_24khz()
         model.set_target_bandwidth(6.0)
         model.eval()
-        model.to("cpu" if (self.offload or self.cpu) else "cuda")
+        model.to(main_device)
+
+        patcher = ModelPatcher(model, main_device, offload_device)  # Allows comfy to unload and offload
+        mm.load_model_gpu(patcher)
+        self.patcher = patcher
+
         self.model = model
 
 class EncodecLoader(BaseNode):
@@ -32,18 +46,15 @@ class EncodecLoader(BaseNode):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "cpu": ("BOOLEAN",),
-                "offload": ("BOOLEAN",)
+                "cpu": ("BOOLEAN",)
             }
         }
 
-    def load(self, cpu: bool, offload: bool):
-        model = EncodecModelRules(cpu, offload)
+    def load(self, cpu: bool):
+        model = EncodecModelRules(cpu)
         model.load()
 
-        # TODO: Ensure the model can be unloaded automatically
-
-        return (None,)
+        return (model,)
 
 
 nodes = [EncodecLoader]

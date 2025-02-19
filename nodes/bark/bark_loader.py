@@ -10,11 +10,15 @@ import torch
 from transformers import BertTokenizer
 
 import comfy.utils
+from comfy.model_base import BaseModel
+from comfy.model_patcher import ModelPatcher
 from lib.bark.model import GPTConfig, GPT
 from lib.bark.model_fine import FineGPTConfig, FineGPT
 from lib.general.model_downloader import download_model_file
 from ...nodes.basenode import BaseNode
 from ...util.categories import category
+
+import comfy.model_management as mm
 
 BarkModelVariant = Literal["large", "small", "none"]
 
@@ -22,16 +26,19 @@ BarkModelVariant = Literal["large", "small", "none"]
 class BarkModelRules:
     name: str
     variant: BarkModelVariant
-    offload: bool
     use_cpu: bool
     half: bool
 
     model: GPT | FineGPT = None
+    patcher: ModelPatcher = None
     tokenizer: BertTokenizer = None # Only used for text
 
     def load(self):
         if self.variant == "none":
             return
+
+        main_device = mm.get_torch_device() if not self.use_cpu else torch.device("cpu")
+        offload_device = mm.unet_offload_device()
 
         cc = None
         mc = None
@@ -60,10 +67,17 @@ class BarkModelRules:
         with open(config_path, "r") as cfg:
             model_instance = mc(cc(**json.load(cfg)))
 
-        selected_device = torch.device("cpu" if (self.offload or self.use_cpu) else "cuda")
+        if self.half:
+            model_instance = model_instance.half()
+
         safetensors.torch.load_model(model_instance, model_path) # Loads on cpu initially
         model_instance.eval()
-        model_instance.to(selected_device)
+        model_instance.to(main_device)
+
+        patcher = ModelPatcher(model_instance, main_device, offload_device) # Allows comfy to unload and offload
+        mm.load_model_gpu(patcher)
+        self.patcher = patcher
+
         self.model = model_instance
 
 
@@ -84,23 +98,14 @@ class BarkLoader(BaseNode):
                 "coarse": (["large", "small", "none"],),
                 "fine": (["large", "small", "none"],),
                 "use_cpu": ("BOOLEAN",),
-                "half": ("BOOLEAN",),
-                "offload_text": ("BOOLEAN",),
-                "offload_coarse": ("BOOLEAN",),
-                "offload_fine": ("BOOLEAN",)
+                "half": ("BOOLEAN",)
             }
         }
 
-    def load(self, text: BarkModelVariant, coarse: BarkModelVariant, fine: BarkModelVariant, use_cpu: bool, half: bool, offload_text: bool, offload_coarse: bool, offload_fine: bool):
+    def load(self, text: BarkModelVariant, coarse: BarkModelVariant, fine: BarkModelVariant, use_cpu: bool, half: bool):
         # Using https://huggingface.co/GitMylo/bark-safetensors since it's recommended to use safetensors
 
-        if use_cpu:
-            # When using cpu only, offloading is useless
-            offload_fine = False
-            offload_coarse = False
-            offload_text = False
-
-        load_models = [BarkModelRules("text", text, offload_text, use_cpu, half), BarkModelRules("coarse", coarse, offload_coarse, use_cpu, half), BarkModelRules("fine", fine, offload_fine, use_cpu, half)]
+        load_models = [BarkModelRules("text", text, use_cpu, half), BarkModelRules("coarse", coarse, use_cpu, half), BarkModelRules("fine", fine, use_cpu, half)]
 
         bar = comfy.utils.ProgressBar(len(load_models))
         for model in load_models:
