@@ -20,7 +20,7 @@ Current nodes:
     * Use model folder (`models/bark/speakers`) for loading/saving voices
   * Hubert quantizer for creating npz from audio https://github.com/gitmylo/bark-voice-cloning-HuBERT-quantizer
   * Coarse-ify codebooks for creating custom npz files
-  * Direct way to support
+  * Direct way to support long-form generations
 * Other
   * HuBert model loader
   * Concat audio
