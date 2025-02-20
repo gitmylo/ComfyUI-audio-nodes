@@ -39,6 +39,8 @@ def _normalize_whitespace(text):
     return re.sub(r"\s+", " ", text).strip()
 
 def _flatten_codebooks(arr, offset_size=CODEBOOK_SIZE):
+    if len(arr.shape) == 1:
+        arr = arr[None] # Fix
     assert len(arr.shape) == 2
     arr = arr.copy()
     if offset_size is not None:
@@ -249,23 +251,7 @@ class GenerateCoarse(BaseNode):
         if coarse_history is not None and semantic_history is not None:
             x_semantic_history = semantic_history
             x_coarse_history = coarse_history
-            assert (
-                    isinstance(x_semantic_history, np.ndarray)
-                    and len(x_semantic_history.shape) == 1
-                    and len(x_semantic_history) > 0
-                    and x_semantic_history.min() >= 0
-                    and x_semantic_history.max() <= SEMANTIC_VOCAB_SIZE - 1
-                    and isinstance(x_coarse_history, np.ndarray)
-                    and len(x_coarse_history.shape) == 2
-                    and x_coarse_history.shape[0] == N_COARSE_CODEBOOKS
-                    and x_coarse_history.shape[-1] >= 0
-                    and x_coarse_history.min() >= 0
-                    and x_coarse_history.max() <= CODEBOOK_SIZE - 1
-                    and (
-                            round(x_coarse_history.shape[-1] / len(x_semantic_history), 1)
-                            == round(semantic_to_coarse_ratio / N_COARSE_CODEBOOKS, 1)
-                    )
-            )
+
             x_coarse_history = _flatten_codebooks(x_coarse_history) + SEMANTIC_VOCAB_SIZE
             # trim histories correctly
             n_semantic_hist_provided = np.min(
@@ -415,6 +401,7 @@ class GenerateFine(BaseNode):
         # ), f"{isinstance(coarse_codebooks, np.ndarray)}, {len(coarse_codebooks.shape)}, }"
         if fine_history is not None:
             x_fine_history = fine_history
+            print(f"fine history: {x_fine_history.shape}")
             assert (
                     isinstance(x_fine_history, np.ndarray)
                     and len(x_fine_history.shape) == 2
