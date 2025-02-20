@@ -1,15 +1,18 @@
 ﻿import dataclasses
 import json
+import os
 from time import sleep
 
 from typing import Literal
 from dataclasses import dataclass
 
+import numpy as np
 import safetensors.torch
 import torch
 from transformers import BertTokenizer
 
 import comfy.utils
+import folder_paths
 from comfy.model_base import BaseModel
 from comfy.model_patcher import ModelPatcher
 from ...lib.bark.model import GPTConfig, GPT
@@ -112,8 +115,55 @@ class BarkLoader(BaseNode):
             model.load()
             bar.update(1)
 
-        # TODO: Ensure the models are properly registered so they can be cleared automatically when not needed.
-
         return tuple(load_models)
 
-nodes = [BarkLoader]
+class LoadSpeakerNPZ(BaseNode):
+    name = "load_speaker_npz"
+    display_name = "Load bark speaker .npz"
+
+    RETURN_NAMES = ("text", "coarse", "fine")
+    RETURN_TYPES = ("BarkSemanticTokens", "EncodecCodeBooks", "EncodecCodeBooks")
+    CATEGORY = category("bark")
+    FUNCTION = "load"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "file": (folder_paths.get_filename_list("bark_speakers"),)
+            }
+        }
+
+    def load(self, file: str):
+        speaker_path = folder_paths.get_full_path_or_raise("bark_speakers", file)
+        speaker = np.load(speaker_path)
+        return speaker["semantic_prompt"], speaker["coarse_prompt"], speaker["fine_prompt"]
+
+class SaveSpeakerNPZ(BaseNode):
+    name = "save_speaker_npz"
+    display_name = "Save bark speaker .npz"
+
+    RETURN_NAMES = ()
+    RETURN_TYPES = ()
+    CATEGORY = category("bark")
+    FUNCTION = "save"
+
+    OUTPUT_NODE = True
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "name": ("STRING", {"default": "speaker"}),
+                "semantic_prompt": ("BarkSemanticTokens",),
+                "coarse_prompt": ("EncodecCodeBooks",),
+                "fine_prompt": ("EncodecCodeBooks",)
+            }
+        }
+
+    def save(self, name: str, semantic_prompt, coarse_prompt, fine_prompt):
+        speaker_path = os.path.join(folder_paths.models_dir, "bark", "speakers", name)
+        np.savez(speaker_path, semantic_prompt=semantic_prompt, coarse_prompt=coarse_prompt, fine_prompt=fine_prompt)
+        return ()
+
+nodes = [BarkLoader, LoadSpeakerNPZ, SaveSpeakerNPZ]

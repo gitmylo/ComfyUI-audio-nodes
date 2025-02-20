@@ -6,8 +6,10 @@ import folder_paths
 from comfy.utils import load_torch_file
 
 
-def add_model_folder_path(type_name: str):
-    folder_paths.add_model_folder_path(type_name, os.path.join(folder_paths.models_dir, type_name))
+def add_model_folder_path(type_name: str, path = None):
+    if path is None:
+        path = os.path.join(folder_paths.models_dir, type_name)
+    folder_paths.add_model_folder_path(type_name, path)
 
 def get_model_path_or_none(type_name: str, model_name: str) -> str | None:
     return folder_paths.get_full_path(type_name, model_name)

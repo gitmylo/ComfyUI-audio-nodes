@@ -401,7 +401,6 @@ class GenerateFine(BaseNode):
         # ), f"{isinstance(coarse_codebooks, np.ndarray)}, {len(coarse_codebooks.shape)}, }"
         if fine_history is not None:
             x_fine_history = fine_history
-            print(f"fine history: {x_fine_history.shape}")
             assert (
                     isinstance(x_fine_history, np.ndarray)
                     and len(x_fine_history.shape) == 2
