@@ -6,11 +6,12 @@ import numpy
 import numpy as np
 import torch
 import torch.nn.functional as F
+from encodec.utils import convert_audio
 from scipy.special import softmax
 
 from comfy.utils import ProgressBar
 from ...lib.bark.generation import autocast, InferenceContext
-from .bark_loader import BarkModelRules
+from .bark_loader import BarkModelRules, BarkHubertModelRules, BarkHubertQuantizerModelRules
 from ...util.categories import category
 from ...nodes.basenode import BaseNode
 
@@ -491,4 +492,84 @@ class GenerateFine(BaseNode):
 
         return (gen_fine_arr,)
 
-nodes = [PromptEncode, GenerateSemantic, GenerateCoarse, GenerateFine]
+class HubertEncode(BaseNode):
+    name = "bark_hubert_encode"
+    display_name = "HuBERT vectorize audio"
+
+    RETURN_NAMES = ("vectors",)
+    RETURN_TYPES = ("HuBERTVectors",)
+    CATEGORY = category("bark/cloning")
+    FUNCTION = "encode"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "hubert_model": ("BarkHuBERTModel",),
+                "audio": ("AUDIO",)
+            }
+        }
+
+    def encode(self, hubert_model: BarkHubertModelRules, audio):
+        device = hubert_model.patcher.load_device
+        hubert_model.patcher.load(device)
+        model = hubert_model.model
+
+        wav: torch.Tensor = audio["waveform"]
+        sr: int = audio["sample_rate"]
+        wav = convert_audio(wav, sr, model.target_sample_hz, 1)
+        wav = wav.to(device)[0] # shape was [1, 1, 1, 179840]
+
+        vecs = model.forward(wav, input_sample_hz=sr)
+
+        return (vecs,)
+
+class HubertQuantize(BaseNode):
+    name = "bark_hubert_quantize"
+    display_name = "quantize HuBERT vectors to bark semantic tokens"
+
+    RETURN_NAMES = ("semantic_tokens",)
+    RETURN_TYPES = ("BarkSemanticTokens",)
+    CATEGORY = category("bark/cloning")
+    FUNCTION = "quantize"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "quantizer_model": ("BarkHuBERTQuantizerModel",),
+                "vectors": ("HuBERTVectors",)
+            }
+        }
+
+    def quantize(self, quantizer_model: BarkHubertQuantizerModelRules, vectors: torch.Tensor):
+        device = quantizer_model.patcher.load_device
+        quantizer_model.patcher.load(device)
+        model = quantizer_model.model
+
+        vectors = vectors.to(device)
+        tokens = model.get_token(vectors)
+
+        return (tokens,)
+
+class EncodecCourseify(BaseNode):
+    name = "bark_encodec_coarseify"
+    display_name = "Course-ify encodec codebooks"
+
+    RETURN_NAMES = ("coarse_codebooks",)
+    RETURN_TYPES = ("EncodecCodeBooks",)
+    CATEGORY = category("bark")
+    FUNCTION = "encode"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "fine_codebooks": ("EncodecCodeBooks",)
+            }
+        }
+
+    def encode(self, fine_codebooks):
+        return (fine_codebooks[:2, :],)
+
+nodes = [PromptEncode, GenerateSemantic, GenerateCoarse, GenerateFine, HubertEncode, HubertQuantize, EncodecCourseify]

@@ -10,6 +10,8 @@ Current nodes:
     2. Coarse
     3. Fine
   * Load/save speaker npz, put speaker .npz files in `models/bark/speakers`
+  * HuBert model loader
+  * Hubert quantizer for creating npz from audio https://github.com/gitmylo/bark-voice-cloning-HuBERT-quantizer
 * Encodec
   * Load models
   * Encode audio
@@ -17,8 +19,6 @@ Current nodes:
 
 # TODO
 * Bark
-  * Hubert quantizer for creating npz from audio https://github.com/gitmylo/bark-voice-cloning-HuBERT-quantizer
+  * Add an option to select the final layer for the hubert quantizer (similar to clip skip, but for hubert, so let's call it hubert skip)
   * Coarse-ify codebooks for creating custom npz files
   * Direct way to support long-form generations
-* Other
-  * HuBert model loader

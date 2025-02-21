@@ -9,12 +9,15 @@ from dataclasses import dataclass
 import numpy as np
 import safetensors.torch
 import torch
-from transformers import BertTokenizer
+from transformers import BertTokenizer, HubertModel
 
 import comfy.utils
 import folder_paths
 from comfy.model_base import BaseModel
 from comfy.model_patcher import ModelPatcher
+from lib.bark.hubert.hubert_manager import HuBERTManager
+from ...lib.bark.hubert.customtokenizer import CustomTokenizer
+from ...lib.bark.hubert.pre_kmeans_hubert import CustomHubert
 from ...lib.bark.model import GPTConfig, GPT
 from ...lib.bark.model_fine import FineGPTConfig, FineGPT
 from ...lib.general.model_downloader import download_model_file
@@ -166,4 +169,79 @@ class SaveSpeakerNPZ(BaseNode):
         np.savez(speaker_path, semantic_prompt=semantic_prompt, coarse_prompt=coarse_prompt, fine_prompt=fine_prompt)
         return ()
 
-nodes = [BarkLoader, LoadSpeakerNPZ, SaveSpeakerNPZ]
+@dataclass
+class BarkHubertModelRules:
+    cpu: bool
+
+    model: CustomHubert = None
+    patcher: ModelPatcher = None
+
+    def load(self):
+        main_device = mm.get_torch_device() if not self.cpu else torch.device("cpu")
+        offload_device = mm.unet_offload_device()
+
+        self.model = CustomHubert()
+        self.patcher = ModelPatcher(self.model, main_device, offload_device)
+
+class LoadHubertBark(BaseNode):
+    name = "load_bark_hubert"
+    display_name = "Load HuBERT model (bark)"
+
+    RETURN_NAMES = ("model",)
+    RETURN_TYPES = ("BarkHuBERTModel",)
+    CATEGORY = category("bark/cloning")
+    FUNCTION = "load"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                # "cpu": ("BOOLEAN",)
+            }
+        }
+
+    def load(self, cpu: bool = True):
+        model = BarkHubertModelRules(cpu)
+        model.load()
+        return (model,)
+
+@dataclass
+class BarkHubertQuantizerModelRules:
+    cpu: bool
+    model: str
+
+    model: CustomTokenizer = None
+    patcher: ModelPatcher = None
+
+    def load(self):
+        main_device = mm.get_torch_device() if not self.cpu else torch.device("cpu")
+        offload_device = mm.unet_offload_device()
+
+        model_file = HuBERTManager.make_sure_tokenizer_installed(self.model)
+        self.model = CustomTokenizer.load_from_checkpoint(model_file)
+        self.patcher = ModelPatcher(self.model, main_device, offload_device)
+
+class LoadHubertQuantizerBark(BaseNode):
+    name = "load_bark_hubert_quantizer"
+    display_name = "Load HuBERT quantizer model (bark)"
+
+    RETURN_NAMES = ("model",)
+    RETURN_TYPES = ("BarkHuBERTQuantizerModel",)
+    CATEGORY = category("bark/cloning")
+    FUNCTION = "load"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                # "cpu": ("BOOLEAN",)
+                "model": (["quantifier_hubert_base_ls960.pth", "quantifier_hubert_base_ls960_14.pth", "quantifier_V1_hubert_base_ls960_23.pth"],) # TODO: Load from online/local registry
+            }
+        }
+
+    def load(self, model, cpu: bool = True):
+        model = BarkHubertQuantizerModelRules(cpu, model)
+        model.load()
+        return (model,)
+
+nodes = [BarkLoader, LoadSpeakerNPZ, SaveSpeakerNPZ, LoadHubertBark, LoadHubertQuantizerBark]

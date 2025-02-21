@@ -1,7 +1,7 @@
 [project]
 name = "audio-nodes"
 description = "Various nodes related to audio."
-version = "1.0.3"
+version = "1.0.4"
 license = {file = "LICENSE"}
 dependencies = ["funcy", "encodec"]
 
