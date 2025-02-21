@@ -548,7 +548,7 @@ class HubertQuantize(BaseNode):
         model = quantizer_model.model
 
         vectors = vectors.to(device)
-        tokens = model.get_token(vectors)
+        tokens = model.get_token(vectors).cpu().numpy()
 
         return (tokens,)
 
