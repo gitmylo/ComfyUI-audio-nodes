@@ -15,7 +15,7 @@ import comfy.utils
 import folder_paths
 from comfy.model_base import BaseModel
 from comfy.model_patcher import ModelPatcher
-from lib.bark.hubert.hubert_manager import HuBERTManager
+from ...lib.bark.hubert.hubert_manager import HuBERTManager
 from ...lib.bark.hubert.customtokenizer import CustomTokenizer
 from ...lib.bark.hubert.pre_kmeans_hubert import CustomHubert
 from ...lib.bark.model import GPTConfig, GPT
