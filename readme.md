@@ -11,7 +11,7 @@ Current nodes:
     3. Fine
   * Load/save speaker npz, put speaker .npz files in `models/bark/speakers`
   * HuBert model loader
-  * Hubert quantizer for creating npz from audio https://github.com/gitmylo/bark-voice-cloning-HuBERT-quantizer
+  * HuBert quantizer for creating npz from audio https://github.com/gitmylo/bark-voice-cloning-HuBERT-quantizer
 * Encodec
   * Load models
   * Encode audio
