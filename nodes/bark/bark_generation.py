@@ -506,11 +506,12 @@ class HubertEncode(BaseNode):
         return {
             "required": {
                 "hubert_model": ("BarkHuBERTModel",),
-                "audio": ("AUDIO",)
+                "audio": ("AUDIO",),
+                "hubert_layer": ("INT", {"min": 0, "max": 12, "default": 9})
             }
         }
 
-    def encode(self, hubert_model: BarkHubertModelRules, audio):
+    def encode(self, hubert_model: BarkHubertModelRules, audio, hubert_layer: int):
         device = hubert_model.patcher.load_device
         hubert_model.patcher.load(device)
         model = hubert_model.model
@@ -520,7 +521,7 @@ class HubertEncode(BaseNode):
         wav = convert_audio(wav, sr, model.target_sample_hz, 1)
         wav = wav.to(device)[0] # shape was [1, 1, 1, 179840]
 
-        vecs = model.forward(wav, input_sample_hz=sr)
+        vecs = model.forward(wav, input_sample_hz=sr, output_layer=hubert_layer)
 
         return (vecs,)
 

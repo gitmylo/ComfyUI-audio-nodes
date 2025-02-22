@@ -50,13 +50,12 @@ class CustomHubert(nn.Module):
         self,
         # checkpoint_path,
         target_sample_hz=16000,
-        seq_len_multiple_of=None,
-        output_layer=9
+        seq_len_multiple_of=None
     ):
         super().__init__()
         self.target_sample_hz = target_sample_hz
         self.seq_len_multiple_of = seq_len_multiple_of
-        self.output_layer = output_layer
+        # self.output_layer = output_layer
 
         # model_path = Path(checkpoint_path)
 
@@ -82,7 +81,8 @@ class CustomHubert(nn.Module):
         self,
         wav_input,
         flatten=True,
-        input_sample_hz=None
+        input_sample_hz=None,
+        output_layer=9
     ):
         device = wav_input.device
 
@@ -99,7 +99,10 @@ class CustomHubert(nn.Module):
             # features_only=True,
             # mask=False,  # thanks to @maitycyrus for noticing that mask is defaulted to True in the fairseq code
             # output_layer=self.output_layer
-        ).hidden_states[self.output_layer] # TODO: Ensure this is the proper way to get the output layer
+        ).hidden_states
+
+        print(len(embed))
+        embed = embed[output_layer]
 
         # embed, packed_shape = pack([embed['x']], '* d')
         embed, packed_shape = pack([embed], '* d')
