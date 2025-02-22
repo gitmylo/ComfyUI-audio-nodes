@@ -120,9 +120,9 @@ class EncodecEncode(BaseNode):
         encodec_model.patcher.load(device)
         model = encodec_model.model
 
-        wav: torch.Tensor = audio["waveform"]
+        wav: torch.Tensor = audio["waveform"][0]
         sr: int = audio["sample_rate"]
-        wav = convert_audio(wav, sr, model.sample_rate, model.channels)
+        wav = convert_audio(wav, sr, model.sample_rate, model.channels).unsqueeze(0)
         wav = wav.to(device)
 
         with torch.no_grad():

@@ -516,10 +516,10 @@ class HubertEncode(BaseNode):
         hubert_model.patcher.load(device)
         model = hubert_model.model
 
-        wav: torch.Tensor = audio["waveform"]
+        wav: torch.Tensor = audio["waveform"][0]
         sr: int = audio["sample_rate"]
-        wav = convert_audio(wav, sr, model.target_sample_hz, 1)
-        wav = wav.to(device)[0] # shape was [1, 1, 1, 179840]
+        wav: torch.Tensor = convert_audio(wav, sr, model.target_sample_hz, 1)
+        wav = wav.to(device)
 
         vecs = model.forward(wav, input_sample_hz=sr, output_layer=hubert_layer)
 
